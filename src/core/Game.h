@@ -48,11 +48,22 @@ private:
     enum class MenuItem {
         ONE_PLAYER_GAME,
         TWO_PLAYER_GAME,
-        HIGH_SCORES,
-        EXIT,
         COUNT
     };
     MenuItem selectedMenuItem_;
+
+    // Menu animation state
+    int menuBlinkFrame_;  // For selection blinking effect (5Hz)
+    int confirmAnimationFrame_;  // For confirmation animation (3 quick flashes)
+    bool isConfirmAnimating_;    // Whether confirmation animation is active
+    int menuFadeInFrame_;        // For title fade-in animation (0-30 frames)
+    int menuSlideInFrame_;       // For menu options slide-in animation (0-18 frames)
+    
+    // Game start transition state
+    bool isShowingStageTransition_;  // Whether showing "STAGE 01" transition
+    int stageTransitionFrame_;       // Frame counter for stage transition (0-90 frames = 1.5s)
+    bool isShowingLoading_;         // Whether showing loading prompt
+    int loadingFrame_;               // Frame counter for loading animation
 
     // Level management
     std::unique_ptr<LevelManager> levelManager_;

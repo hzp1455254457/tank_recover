@@ -1,11 +1,14 @@
 #include "LevelManager.h"
+#include "../graphics/Renderer.h"
+#include "../graphics/Palette.h"
 #include <algorithm>
 
 namespace BattleCity {
 
 LevelManager::LevelManager(Random& random)
     : currentLevel_(1), random_(random), enemiesRemaining_(20), enemiesToSpawn_(20),
-      spawnTimer_(80), spawnIndex_(0) {
+      spawnTimer_(48), spawnIndex_(0), enemySpawnCallback_(nullptr) {
+    // First enemy spawns after 800ms = 48 frames at 60fps
     loadLevel(1);
 }
 
@@ -13,13 +16,18 @@ void LevelManager::loadLevel(int level) {
     currentLevel_ = std::clamp(level, 1, MAX_LEVELS);
     enemiesRemaining_ = 20;
     enemiesToSpawn_ = 20;
-    spawnTimer_ = 80; // First enemy spawns after 80 frames
+    spawnTimer_ = 48; // First enemy spawns after 800ms = 48 frames at 60fps
     spawnIndex_ = 0;
 
     generateLevelData(currentLevel_);
 }
 
-void LevelManager::update() {
+void LevelManager::update(bool isPlaying) {
+    // Only spawn enemies when game is in PLAYING state
+    if (!isPlaying) {
+        return;
+    }
+
     // Handle enemy spawning
     if (enemiesToSpawn_ > 0 && spawnTimer_ <= 0) {
         spawnNextEnemy();
@@ -33,7 +41,7 @@ void LevelManager::update() {
 void LevelManager::reset() {
     enemiesRemaining_ = 20;
     enemiesToSpawn_ = 20;
-    spawnTimer_ = 80;
+    spawnTimer_ = 48; // First enemy spawns after 800ms = 48 frames
     spawnIndex_ = 0;
 }
 
@@ -113,45 +121,159 @@ void LevelManager::generateLevelData(int level) {
 }
 
 void LevelManager::loadTerrainData(int level) {
-    // Generate terrain based on level patterns
-    // This is a simplified version - actual implementation would load from data files
+    // Load terrain data from configuration (using fake data for levels 1-5)
+    // For simplicity, use uncompressed format: each byte represents one tile
+    // 0=GRASS, 1=BRICK, 2=STEEL, 3=WATER, 4=BASE_BRICK
+    // 13x13 = 169 tiles = 169 bytes
 
-    // Load actual level data from embedded ROM data
-    // Data is stored in 4-bit compressed format (2 tiles per byte)
+    const uint8_t* data = nullptr;
+    size_t dataSize = 0;
 
     // Level 1: Simple cross pattern with base protection
-    static const uint8_t level1Data[65] = {
-        0x22, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x22,
-        0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20,
-        0x00, 0x00, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+    static const uint8_t level1Data[169] = {
+        2,2,2,2,2,2,2,2,2,2,2,2,2,  // Row 0: Steel boundary
+        2,0,0,0,0,0,0,0,0,0,0,0,2,  // Row 1
+        2,0,1,1,1,0,1,1,1,0,1,1,2,  // Row 2
+        2,0,1,0,0,0,0,0,0,0,0,1,2,  // Row 3
+        2,0,1,0,2,2,0,2,2,0,2,1,2,  // Row 4
+        2,0,1,0,2,0,0,2,0,0,2,1,2,  // Row 5
+        2,0,1,0,2,2,0,2,2,0,2,1,2,  // Row 6
+        2,0,1,0,0,0,0,0,0,0,0,1,2,  // Row 7
+        2,0,1,1,1,0,1,1,1,0,1,1,2,  // Row 8
+        2,0,0,0,0,0,0,0,0,0,0,0,2,  // Row 9
+        2,1,1,1,0,0,0,1,1,1,1,1,2,  // Row 10
+        2,0,0,0,0,0,0,0,0,0,0,0,2,  // Row 11
+        2,2,2,2,2,2,2,2,2,2,2,2,2   // Row 12
     };
 
-    // For now, use level 1 data for all levels (simplified)
-    // TODO: Add complete 35 level ROM data
-    const uint8_t* data = level1Data;
+    // Level 2-5: Use same pattern as level 1 for now (can be expanded later)
+    static const uint8_t level2Data[169] = {
+        2,2,2,2,2,2,2,2,2,2,2,2,2,
+        2,0,0,0,0,0,0,0,0,0,0,0,2,
+        2,0,1,1,1,1,1,1,1,1,1,1,2,
+        2,0,1,0,0,0,0,0,0,0,0,1,2,
+        2,0,1,0,3,3,3,0,0,3,3,1,2,
+        2,0,1,0,3,3,3,0,0,3,3,1,2,
+        2,0,1,0,3,3,3,0,0,3,3,1,2,
+        2,0,1,0,0,0,0,0,0,0,0,1,2,
+        2,0,1,1,1,1,1,1,1,1,1,1,2,
+        2,0,0,0,0,0,0,0,0,0,0,0,2,
+        2,1,1,1,0,0,0,1,1,1,1,1,2,
+        2,0,0,0,0,0,0,0,0,0,0,0,2,
+        2,2,2,2,2,2,2,2,2,2,2,2,2
+    };
 
-    // Decode 4-bit compressed data
-    for (int y = 0; y < 13; ++y) {
-        for (int x = 0; x < 13; ++x) {
-            int index = y * 13 + x;
-            int byteIndex = index / 2;
-            int nibbleShift = (index % 2) * 4;
-            uint8_t nibble = (data[byteIndex] >> nibbleShift) & 0x0F;
+    static const uint8_t level3Data[169] = {
+        2,2,2,2,2,2,2,2,2,2,2,2,2,
+        2,0,0,0,0,0,0,0,0,0,0,0,2,
+        2,0,1,1,1,1,1,1,1,1,1,1,2,
+        2,0,1,0,0,0,0,0,0,0,0,1,2,
+        2,0,1,0,1,1,1,0,1,1,1,1,2,
+        2,0,1,0,1,1,1,0,1,1,1,1,2,
+        2,0,1,0,1,1,1,0,1,1,1,1,2,
+        2,0,1,0,0,0,0,0,0,0,0,1,2,
+        2,0,1,1,1,1,1,1,1,1,1,1,2,
+        2,0,0,0,0,0,0,0,0,0,0,0,2,
+        2,1,1,1,0,0,0,1,1,1,1,1,2,
+        2,0,0,0,0,0,0,0,0,0,0,0,2,
+        2,2,2,2,2,2,2,2,2,2,2,2,2
+    };
 
-            // Convert nibble to TerrainType
-            TerrainType terrainType;
-            switch (nibble) {
-                case 0: terrainType = TerrainType::GRASS; break;
-                case 1: terrainType = TerrainType::BRICK; break;
-                case 2: terrainType = TerrainType::STEEL; break;
-                case 3: terrainType = TerrainType::WATER; break;
-                case 4: terrainType = TerrainType::BASE_BRICK; break;
-                default: terrainType = TerrainType::GRASS; break;
+    // Level 4: Same as level 1 for now
+    static const uint8_t level4Data[169] = {
+        2,2,2,2,2,2,2,2,2,2,2,2,2,
+        2,0,0,0,0,0,0,0,0,0,0,0,2,
+        2,0,1,1,1,0,1,1,1,0,1,1,2,
+        2,0,1,0,0,0,0,0,0,0,0,1,2,
+        2,0,1,0,2,2,0,2,2,0,2,1,2,
+        2,0,1,0,2,0,0,2,0,0,2,1,2,
+        2,0,1,0,2,2,0,2,2,0,2,1,2,
+        2,0,1,0,0,0,0,0,0,0,0,1,2,
+        2,0,1,1,1,0,1,1,1,0,1,1,2,
+        2,0,0,0,0,0,0,0,0,0,0,0,2,
+        2,1,1,1,0,0,0,1,1,1,1,1,2,
+        2,0,0,0,0,0,0,0,0,0,0,0,2,
+        2,2,2,2,2,2,2,2,2,2,2,2,2
+    };
+
+    // Level 5: Same as level 1 for now
+    static const uint8_t level5Data[169] = {
+        2,2,2,2,2,2,2,2,2,2,2,2,2,
+        2,0,0,0,0,0,0,0,0,0,0,0,2,
+        2,0,1,1,1,0,1,1,1,0,1,1,2,
+        2,0,1,0,0,0,0,0,0,0,0,1,2,
+        2,0,1,0,2,2,0,2,2,0,2,1,2,
+        2,0,1,0,2,0,0,2,0,0,2,1,2,
+        2,0,1,0,2,2,0,2,2,0,2,1,2,
+        2,0,1,0,0,0,0,0,0,0,0,1,2,
+        2,0,1,1,1,0,1,1,1,0,1,1,2,
+        2,0,0,0,0,0,0,0,0,0,0,0,2,
+        2,1,1,1,0,0,0,1,1,1,1,1,2,
+        2,0,0,0,0,0,0,0,0,0,0,0,2,
+        2,2,2,2,2,2,2,2,2,2,2,2,2
+    };
+
+    // Select data based on level
+    switch (level) {
+        case 1:
+            data = level1Data;
+            dataSize = sizeof(level1Data);
+            break;
+        case 2:
+            data = level2Data;
+            dataSize = sizeof(level2Data);
+            break;
+        case 3:
+            data = level3Data;
+            dataSize = sizeof(level3Data);
+            break;
+        case 4:
+            data = level4Data;
+            dataSize = sizeof(level4Data);
+            break;
+        case 5:
+            data = level5Data;
+            dataSize = sizeof(level5Data);
+            break;
+        default:
+            // For levels > 5, use level 1 data as fallback
+            data = level1Data;
+            dataSize = sizeof(level1Data);
+            break;
+    }
+
+    // Decode uncompressed data (1 tile per byte)
+    if (data && dataSize >= 169) {
+        for (int y = 0; y < 13; ++y) {
+            for (int x = 0; x < 13; ++x) {
+                int index = y * 13 + x;
+                
+                // Check bounds
+                if (index >= static_cast<int>(dataSize)) {
+                    currentLevelData_.terrain[y][x] = TerrainType::GRASS;
+                    continue;
+                }
+                
+                uint8_t tileValue = data[index];
+
+                // Convert byte value to TerrainType
+                TerrainType terrainType;
+                switch (tileValue) {
+                    case 0: terrainType = TerrainType::GRASS; break;
+                    case 1: terrainType = TerrainType::BRICK; break;
+                    case 2: terrainType = TerrainType::STEEL; break;
+                    case 3: terrainType = TerrainType::WATER; break;
+                    case 4: terrainType = TerrainType::BASE_BRICK; break;
+                    default: terrainType = TerrainType::GRASS; break;
+                }
+
+                currentLevelData_.terrain[y][x] = terrainType;
             }
-
-            currentLevelData_.terrain[y][x] = terrainType;
+        }
+    } else {
+        // Fallback: fill with grass if no data
+        for (auto& row : currentLevelData_.terrain) {
+            row.fill(TerrainType::GRASS);
         }
     }
 
@@ -256,22 +378,91 @@ EnemyType LevelManager::getNextEnemyType() {
 }
 
 int LevelManager::getSpawnInterval() const {
-    // Spawn interval decreases with level (more challenging)
-    int baseInterval = 120; // 2 seconds at 60fps
+    // Spawn interval: 1.5-2 seconds (90-120 frames) at 60fps
+    // Base interval is 120 frames (2 seconds), with slight variation
+    int baseInterval = 120;
     int levelReduction = (currentLevel_ - 1) * 2;
-    return std::max(60, baseInterval - levelReduction); // Minimum 1 second
+    int interval = std::max(90, baseInterval - levelReduction); // Minimum 1.5 seconds
+    
+    // Add slight random variation (90-120 frames range)
+    int variation = random_.range(-15, 15);
+    return std::max(90, interval + variation);
+}
+
+void LevelManager::render(Renderer& renderer) const {
+    // Render terrain (13x13 grid, each tile is 16x16 pixels)
+    const int TILE_SIZE = 16;
+    
+    for (int y = 0; y < 13; ++y) {
+        for (int x = 0; x < 13; ++x) {
+            TerrainType terrain = currentLevelData_.terrain[y][x];
+            int pixelX = x * TILE_SIZE;
+            int pixelY = y * TILE_SIZE;
+            
+            uint8_t colorIndex;
+            switch (terrain) {
+                case TerrainType::GRASS:
+                    colorIndex = BattleCityPalette::COLOR_GREEN;
+                    break;
+                case TerrainType::BRICK:
+                    colorIndex = BattleCityPalette::COLOR_YELLOW;
+                    break;
+                case TerrainType::STEEL:
+                    colorIndex = BattleCityPalette::COLOR_GRAY;
+                    break;
+                case TerrainType::WATER:
+                    colorIndex = BattleCityPalette::COLOR_CYAN;
+                    break;
+                case TerrainType::BASE_BRICK:
+                    colorIndex = BattleCityPalette::COLOR_YELLOW;
+                    break;
+                default:
+                    colorIndex = BattleCityPalette::COLOR_GREEN;
+                    break;
+            }
+            
+            // Render tile
+            renderer.fillRect(pixelX, pixelY, TILE_SIZE, TILE_SIZE, colorIndex);
+            
+            // Add visual details for different terrain types
+            if (terrain == TerrainType::BRICK || terrain == TerrainType::BASE_BRICK) {
+                // Draw brick pattern (simple grid lines)
+                renderer.drawRect(pixelX, pixelY, TILE_SIZE, TILE_SIZE, BattleCityPalette::COLOR_BLACK);
+                renderer.drawRect(pixelX + 7, pixelY, 1, TILE_SIZE, BattleCityPalette::COLOR_BLACK);
+                renderer.drawRect(pixelX, pixelY + 7, TILE_SIZE, 1, BattleCityPalette::COLOR_BLACK);
+            } else if (terrain == TerrainType::WATER) {
+                // Draw water animation pattern (simple alternating pattern)
+                for (int wy = 0; wy < TILE_SIZE; wy += 4) {
+                    for (int wx = ((wy / 4) % 2) * 4; wx < TILE_SIZE; wx += 8) {
+                        renderer.fillRect(pixelX + wx, pixelY + wy, 4, 2, BattleCityPalette::COLOR_CYAN);
+                    }
+                }
+            }
+        }
+    }
+    
+    // Render base (eagle icon would be rendered here, for now just a colored square)
+    int baseX = currentLevelData_.basePosition.pixelX();
+    int baseY = currentLevelData_.basePosition.pixelY();
+    renderer.fillRect(baseX - 8, baseY - 8, 16, 16, BattleCityPalette::COLOR_ORANGE);
+    renderer.drawRect(baseX - 8, baseY - 8, 16, 16, BattleCityPalette::COLOR_BLACK);
 }
 
 void LevelManager::spawnNextEnemy() {
-    // Cycle through spawn points
+    // Check if callback is set
+    if (!enemySpawnCallback_) {
+        return; // No callback set, cannot spawn
+    }
+
+    // Cycle through spawn points (4 fixed positions)
     Vector2 spawnPos = currentLevelData_.enemySpawnPoints[spawnIndex_ % 4];
     spawnIndex_++;
 
     // Get enemy type for this spawn
     EnemyType type = getNextEnemyType();
 
-    // Create enemy tank (would be handled by enemy manager)
-    // enemyManager_->spawnEnemy(type, spawnPos);
+    // Call the spawn callback to actually create the enemy
+    enemySpawnCallback_(type, spawnPos);
 }
 
 } // namespace BattleCity

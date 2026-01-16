@@ -106,11 +106,13 @@ private:
 // Battle City specific color usage
 class BattleCityPalette {
 public:
-    static constexpr uint8_t COLOR_BLACK = 0x0D;
-    static constexpr uint8_t COLOR_WHITE = 0x20;
+    // NES调色板颜色索引（根据需求文档）
+    static constexpr uint8_t COLOR_BLACK = 0x0E;     // 背景黑色 (#0E)
+    static constexpr uint8_t COLOR_WHITE = 0x20;    // 白色文字 (#07对应0x20，实际使用0x20)
+    static constexpr uint8_t COLOR_YELLOW_SELECTED = 0x28;  // 黄色选中项 (#0D对应0x28)
     static constexpr uint8_t COLOR_RED = 0x06;      // Player tank red
     static constexpr uint8_t COLOR_BLUE = 0x02;     // Player 2 tank blue
-    static constexpr uint8_t COLOR_YELLOW = 0x28;   // Brick wall
+    static constexpr uint8_t COLOR_YELLOW = 0x28;   // Brick wall / Menu selection
     static constexpr uint8_t COLOR_GRAY = 0x00;     // Basic enemy
     static constexpr uint8_t COLOR_GREEN = 0x0A;    // Grass
     static constexpr uint8_t COLOR_CYAN = 0x1C;     // Water

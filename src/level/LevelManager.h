@@ -4,6 +4,7 @@
 #include "../core/Random.h"
 #include <vector>
 #include <array>
+#include <functional>
 
 namespace BattleCity {
 
@@ -15,6 +16,12 @@ struct LevelData {
     std::vector<Vector2> enemySpawnPoints;
     std::vector<Vector2> playerSpawnPoints;
 };
+
+// Forward declaration
+class Game;
+
+// Enemy spawn callback type
+using EnemySpawnCallback = std::function<void(EnemyType, const Vector2&)>;
 
 // Level manager - handles level loading, terrain, and enemy spawning
 class LevelManager {
@@ -28,6 +35,9 @@ private:
     int spawnTimer_;
     int spawnIndex_;
 
+    // Enemy spawn callback
+    EnemySpawnCallback enemySpawnCallback_;
+
     // Enemy spawn patterns per level
     static const int MAX_LEVELS = 35;
 
@@ -36,7 +46,7 @@ public:
 
     // Level management
     void loadLevel(int level);
-    void update();
+    void update(bool isPlaying = true); // Only update spawning when playing
     void reset();
 
     // Getters
@@ -61,6 +71,12 @@ public:
     // Spawn points
     const std::vector<Vector2>& getEnemySpawnPoints() const { return currentLevelData_.enemySpawnPoints; }
     const std::vector<Vector2>& getPlayerSpawnPoints() const { return currentLevelData_.playerSpawnPoints; }
+
+    // Enemy spawn callback setup
+    void setEnemySpawnCallback(EnemySpawnCallback callback) { enemySpawnCallback_ = callback; }
+
+    // Rendering
+    void render(class Renderer& renderer) const;
 
 private:
     // Level data loading

@@ -9,7 +9,11 @@ namespace BattleCity {
 Game::Game()
     : currentState_(GameState::MENU), currentLevel_(1), highScore_(0),
       isTwoPlayerMode_(false), gameStartTime_(0), isPaused_(false),
-      selectedMenuItem_(MenuItem::ONE_PLAYER_GAME) {
+      selectedMenuItem_(MenuItem::ONE_PLAYER_GAME), menuBlinkFrame_(0),
+      confirmAnimationFrame_(0), isConfirmAnimating_(false),
+      menuFadeInFrame_(0), menuSlideInFrame_(0),
+      isShowingStageTransition_(false), stageTransitionFrame_(0),
+      isShowingLoading_(false), loadingFrame_(0) {
 
     // Initialize core systems
     renderer_ = std::make_unique<Renderer>(3, true); // 3x scale, VSync
@@ -19,6 +23,11 @@ Game::Game()
 
     // Initialize level manager
     levelManager_ = std::make_unique<LevelManager>(*random_);
+    
+    // Set enemy spawn callback
+    levelManager_->setEnemySpawnCallback([this](EnemyType type, const Vector2& position) {
+        this->spawnEnemy(type, position);
+    });
 }
 
 bool Game::init() {
@@ -35,15 +44,9 @@ bool Game::init() {
     isPaused_ = false;
 
     std::cout << "Battle City initialized successfully!" << std::endl;
-    // Write log and show a modal message box so user can focus the window and we can debug rendering
-    {
-        std::ofstream log("D:/tankRecover/build/Release/debug_log.txt", std::ios::app);
-        if (log) log << "Game::init() completed, showing debug messagebox\n";
-    }
-    // Show modal message box (SDL) to pause and allow manual focus/inspection
-    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Battle City - Debug", "Initialization complete.\nPress OK to continue.", renderer_->getWindow());
     // Ensure window is raised/focused so keyboard input works
     SDL_RaiseWindow(renderer_->getWindow());
+    SDL_SetWindowInputFocus(renderer_->getWindow());
     return true;
 }
 
@@ -91,17 +94,8 @@ bool Game::run() {
             running = false;
         }
 
-        // Check if menu requested exit
-        if (currentState_ == GameState::MENU && selectedMenuItem_ == MenuItem::EXIT) {
-            // Wait for confirmation
-            static bool exitConfirmed = false;
-            if (!exitConfirmed && (inputManager_->isJustPressed(GameAction::SHOOT, 0) ||
-                                  inputManager_->isJustPressed(GameAction::START, 0))) {
-                std::cout << "Exit confirmed by user" << std::endl;
-                exitConfirmed = true;
-                shouldExit = true;
-            }
-        }
+        // Check for quit (ESC key or window close)
+        // Exit is handled via SDL_QUIT event or ESC key
     }
     std::cout << "Game::run() exiting" << std::endl;
     return shouldExit;
@@ -118,12 +112,28 @@ void Game::changeState(GameState newState) {
 
     switch (newState) {
         case GameState::MENU:
+            // Reset menu animations when returning to menu
+            menuFadeInFrame_ = 0;
+            menuSlideInFrame_ = 0;
+            isShowingStageTransition_ = false;
+            isShowingLoading_ = false;
             break;
         case GameState::PLAYING:
+            // Show loading prompt first
+            isShowingLoading_ = true;
+            loadingFrame_ = 0;
+            
+            // Initialize players and level
             if (!player1_) {
                 initPlayers();
             }
             startLevel(currentLevel_);
+            
+            // Show stage transition after loading
+            isShowingLoading_ = false;
+            isShowingStageTransition_ = true;
+            stageTransitionFrame_ = 0;
+            
             gameStartTime_ = timer_->getFrameCount();
             break;
         case GameState::PAUSED:
@@ -303,6 +313,14 @@ void Game::update() {
             updateMenu();
             break;
         case GameState::PLAYING:
+            // Update stage transition animation
+            if (isShowingStageTransition_) {
+                stageTransitionFrame_++;
+                // Stage transition lasts 90 frames (1.5 seconds)
+                if (stageTransitionFrame_ >= 90) {
+                    isShowingStageTransition_ = false;
+                }
+            }
             updatePlaying();
             break;
         case GameState::PAUSED:
@@ -321,24 +339,11 @@ void Game::update() {
 }
 
 void Game::render() {
-    std::cout << "Game::render state=" << static_cast<int>(currentState_) << std::endl;
     renderer_->clear();
 
     switch (currentState_) {
         case GameState::MENU:
             renderMenu();
-            // Debug: log menu state and key raw states each render
-            {
-                std::ofstream log("D:/tankRecover/build/Release/debug_log.txt", std::ios::app);
-                if (log) {
-                    log << "Render: MENU selected=" << static_cast<int>(selectedMenuItem_)
-                        << " up=" << inputManager_->isPressed(GameAction::UP, 0)
-                        << " down=" << inputManager_->isPressed(GameAction::DOWN, 0)
-                        << " shoot=" << inputManager_->isPressed(GameAction::SHOOT, 0)
-                        << " start=" << inputManager_->isPressed(GameAction::START, 0)
-                        << "\n";
-                }
-            }
             break;
         case GameState::PLAYING:
         case GameState::PAUSED:
@@ -363,60 +368,89 @@ void Game::render() {
 }
 
 void Game::updateMenu() {
-    // Handle menu navigation
-    // Debug: log input states when in menu
-    bool upPressed = inputManager_->isPressed(GameAction::UP, 0);
-    bool downPressed = inputManager_->isPressed(GameAction::DOWN, 0);
-    bool shootJust = inputManager_->isJustPressed(GameAction::SHOOT, 0);
-    bool startJust = inputManager_->isJustPressed(GameAction::START, 0);
-    if (upPressed || downPressed || shootJust || startJust) {
-        std::ofstream log("D:/tankRecover/build/Release/debug_log.txt", std::ios::app);
-        if (log) log << "Menu input state: up=" << upPressed << " down=" << downPressed
-                     << " shootJust=" << shootJust << " startJust=" << startJust
-                     << " selected=" << static_cast<int>(selectedMenuItem_) << "\n";
+    // Update menu fade-in animation (0.5s = 30 frames)
+    if (menuFadeInFrame_ < 30) {
+        menuFadeInFrame_++;
+    }
+    
+    // Update menu slide-in animation (0.3s = 18 frames, starts after 10 frames)
+    if (menuFadeInFrame_ >= 10 && menuSlideInFrame_ < 18) {
+        menuSlideInFrame_++;
+    }
+    
+    // Update menu blink animation (5Hz = every 12 frames at 60FPS)
+    menuBlinkFrame_++;
+    if (menuBlinkFrame_ >= 12) {
+        menuBlinkFrame_ = 0;
     }
 
-    if (inputManager_->isJustPressed(GameAction::DOWN, 0)) {
-        // Move to next menu item
-        int nextItem = static_cast<int>(selectedMenuItem_) + 1;
-        if (nextItem >= static_cast<int>(MenuItem::COUNT)) {
-            nextItem = 0;
-        }
-        selectedMenuItem_ = static_cast<MenuItem>(nextItem);
-        std::cout << "Menu: Selected item " << static_cast<int>(selectedMenuItem_) << std::endl;
-    }
-    else if (inputManager_->isJustPressed(GameAction::UP, 0)) {
+    // Handle menu navigation with debouncing
+    static int lastNavFrame = -1;
+    static bool lastUpState = false;
+    static bool lastDownState = false;
+    
+    int currentFrame = timer_->getFrameCount();
+    bool upPressed = inputManager_->isPressed(GameAction::UP, 0);
+    bool downPressed = inputManager_->isPressed(GameAction::DOWN, 0);
+    
+    // Check for navigation input (with debouncing - only allow once per 15 frames for held keys)
+    bool navAllowed = (currentFrame - lastNavFrame) >= 15;
+    bool upJustPressed = upPressed && !lastUpState;
+    bool downJustPressed = downPressed && !lastDownState;
+    
+    if (upJustPressed || (upPressed && navAllowed)) {
         // Move to previous menu item
         int prevItem = static_cast<int>(selectedMenuItem_) - 1;
         if (prevItem < 0) {
-            prevItem = static_cast<int>(MenuItem::COUNT) - 1;
+            prevItem = 1; // Only 2 menu items now (0 or 1)
         }
         selectedMenuItem_ = static_cast<MenuItem>(prevItem);
+        lastNavFrame = currentFrame;
         std::cout << "Menu: Selected item " << static_cast<int>(selectedMenuItem_) << std::endl;
     }
-    else if (inputManager_->isJustPressed(GameAction::SHOOT, 0) ||
-             inputManager_->isJustPressed(GameAction::START, 0)) {
-        // Confirm selection
-        std::cout << "Menu: Confirmed selection " << static_cast<int>(selectedMenuItem_) << std::endl;
-        switch (selectedMenuItem_) {
-            case MenuItem::ONE_PLAYER_GAME:
-                std::cout << "Starting 1 player game" << std::endl;
-                isTwoPlayerMode_ = false;
-                changeState(GameState::PLAYING);
-                break;
-            case MenuItem::TWO_PLAYER_GAME:
-                std::cout << "Starting 2 player game" << std::endl;
-                isTwoPlayerMode_ = true;
-                changeState(GameState::PLAYING);
-                break;
-            case MenuItem::HIGH_SCORES:
-                // TODO: Show high scores screen
-                std::cout << "High scores not implemented yet" << std::endl;
-                break;
-            case MenuItem::EXIT:
-                std::cout << "Exiting game" << std::endl;
-                // Note: Exit will be handled in the main game loop
-                break;
+    else if (downJustPressed || (downPressed && navAllowed)) {
+        // Move to next menu item (only 2 items now: 1P and 2P)
+        int nextItem = static_cast<int>(selectedMenuItem_) + 1;
+        if (nextItem >= 2) { // Only 2 menu items now
+            nextItem = 0;
+        }
+        selectedMenuItem_ = static_cast<MenuItem>(nextItem);
+        lastNavFrame = currentFrame;
+        std::cout << "Menu: Selected item " << static_cast<int>(selectedMenuItem_) << std::endl;
+    }
+    
+    lastUpState = upPressed;
+    lastDownState = downPressed;
+    
+    // Handle menu selection confirmation
+    if (inputManager_->isJustPressed(GameAction::SHOOT, 0) ||
+        inputManager_->isJustPressed(GameAction::START, 0)) {
+        // Start confirmation animation (3 quick flashes)
+        isConfirmAnimating_ = true;
+        confirmAnimationFrame_ = 0;
+        std::cout << "Menu: Started confirmation animation for selection " << static_cast<int>(selectedMenuItem_) << std::endl;
+    }
+
+    // Update confirmation animation
+    if (isConfirmAnimating_) {
+        confirmAnimationFrame_++;
+        // Animation lasts 18 frames (3 flashes × 6 frames each)
+        if (confirmAnimationFrame_ >= 18) {
+            // Animation complete, execute selection
+            isConfirmAnimating_ = false;
+            std::cout << "Menu: Confirmed selection " << static_cast<int>(selectedMenuItem_) << std::endl;
+            switch (selectedMenuItem_) {
+                case MenuItem::ONE_PLAYER_GAME:
+                    std::cout << "Starting 1 player game" << std::endl;
+                    isTwoPlayerMode_ = false;
+                    changeState(GameState::PLAYING);
+                    break;
+                case MenuItem::TWO_PLAYER_GAME:
+                    std::cout << "Starting 2 player game" << std::endl;
+                    isTwoPlayerMode_ = true;
+                    changeState(GameState::PLAYING);
+                    break;
+            }
         }
     }
 }
@@ -532,8 +566,8 @@ void Game::updatePlaying() {
     // Check power-up collisions
     checkPowerUpCollisions();
 
-    // Update level
-    levelManager_->update();
+    // Update level (only spawn enemies when playing)
+    levelManager_->update(currentState_ == GameState::PLAYING);
 
     // Check level completion
     if (isLevelComplete()) {
@@ -573,72 +607,138 @@ void Game::updateLevelComplete() {
 }
 
 void Game::renderMenu() {
-    // Render title
-    renderer_->drawText(80, 60, "BATTLE CITY", BattleCityPalette::COLOR_WHITE);
+    // Note: clear() is already called in render(), don't clear again here
 
-    // Render menu options with selection highlighting
-    const char* menuTexts[] = {
-        "1 PLAYER GAME",
-        "2 PLAYER GAME",
-        "HIGH SCORES",
-        "EXIT"
-    };
-
-    int menuY = 120;
-    for (int i = 0; i < static_cast<int>(MenuItem::COUNT); ++i) {
-        uint8_t color = (i == static_cast<int>(selectedMenuItem_)) ?
-                       BattleCityPalette::COLOR_YELLOW : BattleCityPalette::COLOR_WHITE;
-        renderer_->drawText(100, menuY + i * 20, menuTexts[i], color);
+    // Render title with fade-in animation (0.5s = 30 frames)
+    // Use English title since font only supports ASCII
+    const char* titleText = "BATTLE CITY";
+    int titleWidth = strlen(titleText) * 8; // 11 characters * 8 pixels = 88 pixels
+    int titleX = (renderer_->getWidth() - titleWidth) / 2; // Center horizontally
+    int titleY = 100; // Y position between 80-120
+    
+    // Calculate fade-in alpha (0.0 to 1.0)
+    float titleAlpha = (menuFadeInFrame_ < 30) ? (menuFadeInFrame_ / 30.0f) : 1.0f;
+    
+    // For now, render title (full implementation would use alpha blending)
+    if (menuFadeInFrame_ > 0) {
+        renderer_->drawText(titleX, titleY, titleText, BattleCityPalette::COLOR_WHITE);
     }
 
-    // Render high score
-    char highScoreText[32];
-    sprintf(highScoreText, "HI SCORE %06d", highScore_);
-    renderer_->drawText(80, 200, highScoreText, BattleCityPalette::COLOR_WHITE);
+    // Render menu options with slide-in animation (0.3s = 18 frames, starts after 10 frames)
+    const char* menuTexts[] = {
+        "1P START",
+        "2P START"
+    };
 
-    // Render instruction
-    renderer_->drawText(60, 220, "PRESS UP/DOWN TO SELECT, ENTER TO CONFIRM", BattleCityPalette::COLOR_WHITE);
+    // Menu options start at Y=140, with 20px spacing
+    int menuStartY = 140;
+    int menuX = 96; // Left-aligned at pixel 96
+    
+    // Calculate slide-in offset (starts from -64 pixels, slides to 0)
+    int slideOffset = 0;
+    if (menuSlideInFrame_ < 18) {
+        slideOffset = -64 + (menuSlideInFrame_ * 64 / 18);
+    }
+
+    for (int i = 0; i < 2; ++i) { // Only show 1P and 2P options
+        // Only render if slide-in animation has started
+        if (menuFadeInFrame_ >= 10) {
+            uint8_t color = BattleCityPalette::COLOR_WHITE; // Default to white
+
+            if (i == static_cast<int>(selectedMenuItem_)) {
+                if (isConfirmAnimating_) {
+                    // Confirmation animation: 3 quick flashes (18 frames total)
+                    // Each flash: 3 frames yellow, 3 frames white
+                    int flashPhase = confirmAnimationFrame_ / 6; // 0, 1, 2 for 3 flashes
+                    int flashFrame = confirmAnimationFrame_ % 6;  // 0-5 within each flash
+                    color = (flashFrame < 3) ? BattleCityPalette::COLOR_YELLOW_SELECTED : BattleCityPalette::COLOR_WHITE;
+                } else {
+                    // Normal selection blinking: 5Hz (12 frames total, 6 on, 6 off)
+                    color = (menuBlinkFrame_ < 6) ? BattleCityPalette::COLOR_YELLOW_SELECTED : BattleCityPalette::COLOR_WHITE;
+                }
+            }
+
+            renderer_->drawText(menuX + slideOffset, menuStartY + i * 20, menuTexts[i], color);
+        }
+    }
+
+    // Render high score in top-right corner with digit-by-digit display
+    char highScoreText[32];
+    sprintf(highScoreText, "HI %06d", highScore_);
+    // Calculate right-aligned position: screen width (256) - text width (9 chars * 8 pixels) - margin (8)
+    int textWidth = strlen(highScoreText) * 8;
+    int highScoreX = renderer_->getWidth() - textWidth - 8; // Right-aligned with 8px margin
+    
+    // Show high score digits progressively (0.2s per digit = 12 frames)
+    int digitsToShow = (menuFadeInFrame_ > 20) ? strlen(highScoreText) : (menuFadeInFrame_ / 2);
+    if (digitsToShow > 0) {
+        char partialText[32];
+        strncpy(partialText, highScoreText, digitsToShow);
+        partialText[digitsToShow] = '\0';
+        // Recalculate position for partial text
+        int partialTextWidth = digitsToShow * 8;
+        int partialX = renderer_->getWidth() - partialTextWidth - 8;
+        renderer_->drawText(partialX, 8, partialText, BattleCityPalette::COLOR_WHITE);
+    }
 }
 
 void Game::renderPlaying() {
-    // Render level terrain (would be implemented)
-    // levelManager_->render(*renderer_);
+    // Render stage transition overlay if showing
+    if (isShowingStageTransition_) {
+        // Draw semi-transparent black overlay
+        renderer_->fillRect(0, 0, renderer_->getWidth(), renderer_->getHeight(), BattleCityPalette::COLOR_BLACK);
+        
+        // Render "STAGE 01" text in center (golden color, pixel font)
+        char stageText[32];
+        sprintf(stageText, "STAGE %02d", currentLevel_);
+        int stageTextX = (renderer_->getWidth() - strlen(stageText) * 8) / 2;
+        int stageTextY = renderer_->getHeight() / 2 - 8;
+        
+        // Use yellow/gold color for stage text
+        renderer_->drawText(stageTextX, stageTextY, stageText, BattleCityPalette::COLOR_YELLOW_SELECTED);
+        
+        // Transition animation: fade in for first 30 frames, hold for 60 frames, fade out for last 30 frames
+        // For now, just show the text (full alpha blending would be implemented with SDL_SetRenderDrawBlendMode)
+    } else {
+        // Render level terrain
+        levelManager_->render(*renderer_);
 
-    // Render players
-    if (player1_) {
-        player1_->render(*renderer_);
-    }
-    if (player2_ && isTwoPlayerMode_) {
-        player2_->render(*renderer_);
-    }
-
-    // Render enemies
-    for (auto& enemy : enemies_) {
-        if (enemy && enemy->isActive()) {
-            enemy->render(*renderer_);
+        // Render players
+        if (player1_) {
+            player1_->render(*renderer_);
         }
-    }
-
-    // Render bullets
-    for (auto& bullet : bullets_) {
-        if (bullet && bullet->isActive()) {
-            bullet->render(*renderer_);
+        if (player2_ && isTwoPlayerMode_) {
+            player2_->render(*renderer_);
         }
-    }
 
-    // Render power-ups
-    for (auto& powerUp : powerUps_) {
-        if (powerUp && powerUp->isActive()) {
-            powerUp->render(*renderer_);
+        // Render enemies
+        for (auto& enemy : enemies_) {
+            if (enemy && enemy->isActive()) {
+                enemy->render(*renderer_);
+            }
         }
-    }
 
-    // Render HUD
-    int score = player1_ ? player1_->getScore() : 0;
-    int lives = player1_ ? player1_->getLives() : 0;
-    int level = getCurrentLevel();
-    bool twoPlayerMode = isTwoPlayerMode();
-    hud_.render(*renderer_, score, lives, level, twoPlayerMode);
+        // Render bullets
+        for (auto& bullet : bullets_) {
+            if (bullet && bullet->isActive()) {
+                bullet->render(*renderer_);
+            }
+        }
+
+        // Render power-ups
+        for (auto& powerUp : powerUps_) {
+            if (powerUp && powerUp->isActive()) {
+                powerUp->render(*renderer_);
+            }
+        }
+
+        // Render HUD
+        int score = player1_ ? player1_->getScore() : 0;
+        int lives = player1_ ? player1_->getLives() : 0;
+        int level = getCurrentLevel();
+        bool twoPlayerMode = isTwoPlayerMode();
+        hud_.render(*renderer_, score, lives, level, twoPlayerMode);
+    }
 }
 
 void Game::renderPaused() {
@@ -718,9 +818,36 @@ void Game::resetGame() {
 }
 
 void Game::initPlayers() {
+    // Initialize player 1 (always created)
     player1_ = std::make_unique<PlayerTank>(0, this);
+    
+    // Set player 1 initial position (left side for single player, left side for two player)
+    player1_->setPosition(Vector2::fromPixels(80, 200));
+    
+    // Set player 1 initial lives: 3 for single player, 2 for two player
+    int player1Lives = isTwoPlayerMode_ ? 2 : 3;
+    player1_->setLives(player1Lives);
+    
+    // Reset player 1 score and upgrade state
+    player1_->setScore(0);
+    // player1_->resetUpgrade(); // Would reset tank upgrade level
+    
+    // Initialize player 2 if in two player mode
     if (isTwoPlayerMode_) {
         player2_ = std::make_unique<PlayerTank>(1, this);
+        
+        // Set player 2 initial position (right side)
+        player2_->setPosition(Vector2::fromPixels(160, 200));
+        
+        // Set player 2 initial lives: 2 for two player mode
+        player2_->setLives(2);
+        
+        // Reset player 2 score and upgrade state
+        player2_->setScore(0);
+        // player2_->resetUpgrade(); // Would reset tank upgrade level
+    } else {
+        // Clear player 2 if switching from two player to single player
+        player2_.reset();
     }
 }
 

@@ -37,6 +37,10 @@ public:
     int getScore() const { return score_; }
     bool hasShield() const { return hasShield_; }
     Vector2 getSpawnPosition() const;
+    
+    // Setters for initialization
+    void setLives(int lives) { lives_ = lives; }
+    void setScore(int score) { score_ = score; }
 
     // Power-ups
     void activateShield(int frames);
