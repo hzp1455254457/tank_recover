@@ -1,0 +1,28 @@
+# Battle City Level 1 Data
+# Format: 13x13 grid, 0=grass, 1=brick, 2=steel, 3=water, 4=base_brick
+
+# Terrain layout (13x13)
+1111111111111
+1000000000001
+1011101111011
+1010000000011
+1010220220011
+1010202020011
+1010220220011
+1010000000011
+1011101111011
+1000000000001
+1111000111111
+1000000000001
+1111111111111
+
+# Enemy spawn pattern: B=BASIC, F=FAST, H=HEAVY, E=ELITE
+# 20 enemies total for level 1
+B,B,B,F,B,B,B,F,B,B,B,F,B,B,B,F,B,B,B,F
+
+# Base position (x,y in pixels)
+120,200
+
+# Player spawn positions (x,y in pixels)
+80,200
+160,200

@@ -1,0 +1,665 @@
+# 🚀 坦克大战完美复刻项目规则
+
+## 📋 项目概述
+
+**项目名称**: PC端《坦克大战》完美复刻
+**技术栈**: C++17 + SDL2 + CMake + OpenSpec
+**开发模式**: 基于OpenSpec的规范驱动开发
+**目标**: 实现像素级精确的FC原版坦克大战复刻，包含完整玩法、画风、AI和音效
+
+**当前状态** (2026-01-16):
+- ✅ 已完成: 18/55 个功能 (32.7%)
+- 🔄 进行中: 0 个功能
+- ⏳ 待实现: 37/55 个功能 (67.3%)
+
+## 🎯 开发原则
+
+### 核心要求
+1. **像素级复刻**: 画面、玩法、音效完全匹配FC原版
+2. **确定性保证**: 相同输入必须产生相同结果
+3. **性能标准**: 严格60FPS，<50MB内存，<10% CPU占用
+4. **代码质量**: 遵循C++17标准，模块化设计，可维护性优先
+5. **规范驱动**: 所有功能变更必须通过OpenSpec流程
+
+## 🎭 PromptX角色系统集成
+
+### 🚨 强制角色激活要求
+**所有开发任务必须先激活tank-expert角色**：
+```bash
+# 【强制执行】每次开始开发任务前必须执行
+action("tank-expert")
+```
+
+**违反后果**：
+- ❌ 无法使用项目专用记忆系统
+- ❌ 无法访问FC坦克大战专业知识
+- ❌ 无法获得专家级代码指导
+- ❌ 项目质量标准无法保证
+
+### 🧠 tank-expert角色能力
+- 🎯 **项目内容精通**: 完整掌握项目架构、技术实现、需求文档
+- 💻 **C++技术专家**: C++17标准、SDL2/OpenGL、CMake构建系统
+- 🎮 **FC坦克大战权威**: 原版机制、AI逻辑、像素完美复刻标准
+- 🔧 **调试优化专家**: 性能调优、内存管理、跨平台兼容性
+- 📋 **规范创建专家**: OpenSpec流程、代码质量、项目管理
+- 🧠 **记忆系统集成**: PromptX专用记忆网络，项目经验积累
+
+### 复刻标准
+- 🎨 **视觉**: 256×224像素，NES调色板，精确像素渲染
+- 🎮 **玩法**: 完整AI逻辑、道具系统、关卡机制
+- 🔊 **音效**: NES APU硬件级模拟
+- ⚡ **性能**: 帧同步，确定性随机数
+- 📋 **规范**: OpenSpec兼容，中文文档，结构化开发
+
+## 🧠 PromptX记忆系统集成
+
+### 🚨 强制记忆使用要求
+**每次执行开发任务必须遵循认知循环**：
+```bash
+# 【强制流程】每次任务开始时必须执行
+1. action("tank-expert")  # 激活角色
+2. mcp_promptx_recall({role: "tank-expert", query: null})  # DMN全景扫描
+3. 多轮recall深入挖掘  # 根据网络图选择关键词
+4. 结合记忆组织回答   # 记忆 + 代码分析
+5. mcp_promptx_remember(...)  # 保存新知
+```
+
+**违反后果**：
+- ❌ 无法利用项目历史经验
+- ❌ 重复解决已知问题
+- ❌ 项目经验无法积累
+- ❌ 决策缺乏历史参考
+
+### 📥 何时使用 recall（回忆）
+
+**触发时机**（形成条件反射）：
+- ✅ **收到新任务时** → 先用 `recall` 查看相关记忆
+- ✅ **遇到不熟悉的模块时** → `recall` 该模块的历史经验
+- ✅ **调试问题时** → `recall` 是否有类似问题的解决方案
+- ✅ **不确定架构决策时** → `recall` 之前的设计决策
+- ✅ **实现新功能前** → `recall` 类似功能的实现模式
+- ✅ **性能优化时** → `recall` 之前的优化经验
+
+**推荐工作流**：
+1. **DMN 全景扫描**：`mcp_promptx_recall({role: "tank-expert", query: null})` → 看到角色的所有记忆域
+2. **多轮深入挖掘**：从返回的网络图中选词 → 继续 `recall` 深入
+3. **交叉验证**：多关键词组合查询 → 获取更精准信息
+4. **直到信息充足**：不要一次就停止，持续挖掘相关记忆
+
+**坦克大战专用场景示例**：
+```
+用户请求: "帮我实现NES音频系统"
+AI 行为:
+  1. mcp_promptx_recall({role: "tank-expert", query: null}) → 看全景
+  2. mcp_promptx_recall({role: "tank-expert", query: "NES 音频 APU"}) → 深入音频领域
+  3. mcp_promptx_recall({role: "tank-expert", query: "SDL2_mixer 集成"}) → 技术栈相关
+  4. 结合记忆 + 代码分析给出方案
+  5. mcp_promptx_remember(...) → 保存新实现方案
+```
+
+### 📤 何时使用 remember（记忆）
+
+**触发时机**（形成条件反射）：
+- ✅ **回答完用户问题后** → 立即 `remember` 关键点
+- ✅ **解决了一个 bug** → `remember` 问题原因和解决方案
+- ✅ **发现了新知识/技巧** → `remember` 保存到项目知识库
+- ✅ **recall 返回空白领域** → 必须 `remember` 填补知识空白
+- ✅ **做了架构决策** → `remember` 决策理由和权衡
+- ✅ **完成OpenSpec变更** → `remember` 实施过程和经验
+- ✅ **发现性能优化点** → `remember` 优化方法和效果
+
+**记忆模板**（快速完成，10秒内）：
+```javascript
+mcp_promptx_remember({
+  role: "tank-expert",  // 必须使用tank-expert角色
+  engrams: [{
+    content: "刚刚实现的NES音频APU脉冲通道模拟，包含占空比控制和频率调节",
+    schema: "NES APU 脉冲通道 SDL2_mixer 音频模拟",  // 关键词组合
+    strength: 0.8,  // 重要程度: 0.5-0.9
+    type: "PATTERN"  // ATOMIC(事实)|LINK(关系)|PATTERN(模式)
+  }]
+})
+```
+
+### 🔄 认知循环工作流（坦克大战项目专用）
+
+```
+┌─────────────────────┐
+│ 1.接收开发任务       │ ← 用户需求或OpenSpec变更
+└─────────┬───────────┘
+          ↓
+┌─────────────────────┐
+│ 2.强制角色激活       │ ← action("tank-expert")
+└─────────┬───────────┘
+          ↓
+┌─────────────────────┐
+│ 3.DMN全景扫描        │ ← mcp_promptx_recall(role, null)
+│ 查看记忆网络全景图    │
+└─────────┬───────────┘
+          ↓
+┌─────────────────────┐
+│ 4.多轮深入挖掘       │ ← 根据网络图选词继续recall
+│ NES音频/APU/渲染/... │
+└─────────┬───────────┘
+          ↓
+┌─────────────────────┐
+│ 5.结合记忆组织回答   │ ← 记忆 + 代码分析 + OpenSpec
+└─────────┬───────────┘
+          ↓
+┌─────────────────────┐
+│ 6.立即保存新知       │ ← mcp_promptx_remember(...)
+│ 扩充项目记忆网络      │
+└─────────────────────┘
+```
+
+### 📊 记忆质量标准
+
+**优秀记忆示例**：
+```javascript
+// ✅ 好的记忆：具体、可复用、有价值
+{
+  content: "实现NES APU Triangle通道时，需要注意线性计数器与长度计数器的区别",
+  schema: "NES APU Triangle 线性计数器 长度计数器",
+  strength: 0.8,
+  type: "ATOMIC"
+}
+
+// ❌ 差的记忆：太泛化、无价值
+{
+  content: "写代码",
+  schema: "代码",
+  strength: 0.5,
+  type: "ATOMIC"
+}
+```
+
+## 🔄 PromptX + OpenSpec开发工作流
+
+### 🚨 强制执行流程（每次任务开始）
+
+#### 1. 🎭 角色激活（必须第一步）
+```bash
+# 【强制】激活坦克大战专家角色
+action("tank-expert")
+```
+
+#### 2. 🧠 记忆扫描（必须第二步）
+```bash
+# 【强制】DMN全景扫描当前记忆状态
+mcp_promptx_recall({role: "tank-expert", query: null})
+
+# 【可选】针对性记忆查询（根据任务需求）
+mcp_promptx_recall({role: "tank-expert", query: "相关关键词"})
+```
+
+#### 3. 📋 OpenSpec状态检查
+```bash
+# 查看当前开发状态
+openspec list                    # 查看活跃变更
+openspec list --specs           # 查看现有能力
+openspec show [item]            # 查看变更详情
+```
+
+### 三阶段开发流程
+
+#### 📝 阶段1: 创建变更提案 (Planning Phase)
+**触发条件**: 新功能、架构变更、性能优化、破坏性修改
+
+**工作流程**:
+```bash
+# 1. 激活角色并扫描记忆
+action("tank-expert")
+mcp_promptx_recall({role: "tank-expert", query: null})
+
+# 2. 创建变更提案
+CHANGE_ID="add-nes-audio-system"  # kebab-case, 动词引导
+mkdir -p openspec/changes/$CHANGE_ID/{specs/audio,designs}
+
+# 3. 记忆相关经验用于提案撰写
+mcp_promptx_recall({role: "tank-expert", query: "类似功能的实现经验"})
+```
+
+**提案文件结构**:
+```
+openspec/changes/[change-id]/
+├── proposal.md          # 为什么做这个变更
+├── tasks.md            # 实施任务清单
+├── design.md           # 技术决策 (可选)
+└── specs/              # 规范变更增量
+    └── [capability]/
+        └── spec.md     # ## ADDED|MODIFIED|REMOVED Requirements
+```
+
+**提案内容要求**:
+- **proposal.md**: 为什么改、改什么、影响范围
+- **tasks.md**: 具体实施步骤清单
+- **spec.md**: 使用规范格式，包含场景描述
+- **design.md**: 技术决策和权衡 (复杂变更时必需)
+
+#### 🔨 阶段2: 实施变更 (Development Phase)
+**前提条件**: 提案通过评审批准
+
+**工作流程**:
+```bash
+# 1. 激活角色并回顾提案相关记忆
+action("tank-expert")
+mcp_promptx_recall({role: "tank-expert", query: "CHANGE_ID 相关关键词"})
+
+# 2. 读取提案理解需求
+# 3. 按tasks.md顺序实施
+# 4. 实时验证和测试
+# 5. 遇到技术难点时查询记忆
+
+# 验证变更
+openspec validate [change-id] --strict
+
+# 实施完成后立即记忆经验
+mcp_promptx_remember({
+  role: "tank-expert",
+  engrams: [{
+    content: "CHANGE_ID实施过程和关键经验总结",
+    schema: "CHANGE_ID 实施 经验 技术要点",
+    strength: 0.8,
+    type: "PATTERN"
+  }]
+})
+```
+
+**实施标准**:
+- ✅ 代码编译通过 (无警告错误)
+- ✅ 功能按规范正确实现
+- ✅ 经过单元测试和集成测试
+- ✅ 实施过程已记录到记忆系统
+- ✅ 文档更新完成
+
+#### 📦 阶段3: 归档变更 (Completion Phase)
+**触发条件**: 功能部署完成，测试通过
+
+**工作流程**:
+```bash
+# 1. 激活角色回顾实施经验
+action("tank-expert")
+mcp_promptx_recall({role: "tank-expert", query: "CHANGE_ID 实施经验"})
+
+# 2. 部署完成后归档
+openspec archive [change-id] --yes
+openspec validate --strict
+
+# 3. 归档完成后记忆项目经验
+mcp_promptx_remember({
+  role: "tank-expert",
+  engrams: [{
+    content: "CHANGE_ID完整生命周期经验总结：从提案到归档的全过程",
+    schema: "CHANGE_ID 生命周期 提案 实施 归档 经验教训",
+    strength: 0.9,
+    type: "PATTERN"
+  }]
+})
+```
+
+### 🚨 强制执行流程（每次启动Agent）
+
+#### ⚠️ 重要提醒
+**违反以下流程将导致项目质量下降和经验无法积累**
+
+#### 1. 🎭 角色激活 (强制第一步)
+```bash
+# 【强制】每次启动必须先激活tank-expert角色
+action("tank-expert")
+
+# 激活后才能使用项目专用记忆系统
+# 激活后才能获得专家级代码指导
+```
+
+#### 2. 🧠 记忆系统初始化 (强制第二步)
+```bash
+# 【强制】DMN全景扫描，了解当前记忆状态
+mcp_promptx_recall({
+  role: "tank-expert",
+  query: null  // 查看所有记忆域的网络全景图
+})
+
+# 【根据任务需求】多轮深入挖掘
+# 从网络图中选择相关关键词继续查询
+mcp_promptx_recall({
+  role: "tank-expert",
+  query: "NES 音频 APU"  // 示例：针对具体任务
+})
+```
+
+#### 3. 📖 项目状态同步 (第三步)
+```bash
+# 按顺序读取项目文档：
+1. 《项目进度计划表.md》 - 了解当前进度和待完成任务
+2. 《PC端《坦克大战》完整需求文档（Markdown版）.md》 - 确认需求规格
+3. 《PC端《坦克大战》技术实现文档.md》 - 了解技术实现方案
+4. openspec/project.md - 确认项目规范和约定
+5. 查看现有代码结构，确认实现状态
+```
+
+#### 3. 🎯 任务识别与规划
+- 从进度计划表识别当前最高优先级的待完成任务
+- 检查OpenSpec变更依赖关系
+- 使用OpenSpec创建变更提案或继续现有变更
+- 使用todo_write创建具体实施计划
+
+#### 4. 💻 代码实现
+- 严格按照OpenSpec规范和提案要求实现
+- 遵循既有的代码风格和命名规范
+- 实时检查编译错误，确保代码可编译
+- 按照tasks.md清单顺序完成任务
+
+#### 5. 🧪 自检验证
+- 编译通过后进行功能测试
+- 验证与原版行为的匹配度
+- 性能测试确保符合标准
+- OpenSpec验证确保规范一致性
+
+#### 6. 📝 文档更新与记忆保存
+- 更新进度计划表中的任务状态
+- 完成OpenSpec变更后执行归档
+- 记录实现过程中的关键决策
+- **使用remember保存重要经验和技术要点**：
+```javascript
+mcp_promptx_remember({
+  role: "tank-expert",
+  engrams: [{
+    content: "本次实现的核心技术要点",
+    schema: "关键词1 关键词2 关键词3",
+    strength: 0.7,
+    type: "ATOMIC"
+  }]
+})
+```
+
+## 📊 任务状态管理
+
+### OpenSpec变更状态
+- 📝 **提案中**: 变更提案已创建，等待评审
+- 🔄 **实施中**: 提案已批准，正在按tasks.md实施
+- ✅ **已完成**: 功能实现完毕，OpenSpec已归档
+- ⏳ **待实现**: 明确需求但未创建变更提案
+- ❌ **阻塞中**: 由于依赖或其他问题暂时无法推进
+
+### 任务完成标准 (双重验证)
+**OpenSpec流程验证**：
+1. ✅ 变更提案通过评审并获得批准
+2. ✅ 按tasks.md清单完成所有实施任务
+3. ✅ `openspec validate [change-id] --strict` 通过
+4. ✅ 功能满足spec.md中的所有场景要求
+
+**技术实现验证**：
+1. ✅ 代码编译通过 (无警告错误)
+2. ✅ 功能按需求文档正确实现
+3. ✅ 与现有代码无缝集成
+4. ✅ 经过单元测试和集成测试
+5. ✅ 进度计划表已更新状态
+
+**禁止行为**：
+- ❌ 绕过OpenSpec流程直接修改代码
+- ❌ 提交无法编译的代码
+- ❌ 实现与spec.md规范不符的功能
+- ❌ 不完成OpenSpec归档就认为任务完成
+
+## 🛠️ 代码质量标准
+
+### OpenSpec兼容性要求
+- 所有功能变更必须有对应的OpenSpec规范
+- 代码实现必须满足spec.md中的场景要求
+- 提交前必须通过 `openspec validate --strict`
+- 新功能必须有完整的单元测试覆盖
+
+### C++编码规范
+- 使用C++17标准特性
+- 遵循RAII原则，智能指针管理资源
+- 异常安全，禁止使用异常作为控制流
+- 头文件保护，防止重复包含
+- 遵循openspec/project.md中的命名约定
+
+### 命名规范
+```cpp
+// 类名: PascalCase (遵循OpenSpec project.md)
+class PlayerTank {};
+
+// 方法名: camelCase
+void updatePosition();
+
+// 私有成员: 以下划线结尾
+int health_;
+bool isActive_;
+
+// 常量: 全大写下划线分隔
+const int MAX_HEALTH = 3;
+```
+
+### 架构要求
+- 模块化设计，高内聚低耦合
+- 遵循技术文档定义的目录结构
+- 遵循openspec/project.md中的架构模式
+- 单一职责原则，每个类/函数职责明确
+- 优先使用对象池和组件化设计
+
+## 🧪 测试验证标准
+
+### OpenSpec验证流程
+```bash
+# 每次功能完成后必须执行
+openspec validate [change-id] --strict    # 规范验证
+openspec show [change-id] --json         # 检查解析结果
+```
+
+### 编译要求
+- 使用CMake构建系统
+- Windows平台使用MSVC编译器
+- 所有警告视为错误 (-Werror)
+- 零编译警告
+- OpenSpec工具链正常工作
+
+### 功能测试
+- **规范场景验证**: 确保满足spec.md中所有#### Scenario:
+- **核心玩法验证**: 移动、射击、AI行为按规范实现
+- **边界条件测试**: 地图边缘、道具交互
+- **性能基准**: 60FPS稳定运行
+
+### 原版对比
+- 画面像素级对比
+- 游戏机制行为匹配 (按OpenSpec场景要求)
+- 音效波形相似度
+- 确定性行为验证
+
+## 📈 进度追踪规则
+
+### OpenSpec状态同步
+```bash
+# 每日开始工作时执行
+openspec list                    # 查看活跃变更
+openspec list --specs           # 查看已部署能力
+openspec show [active-change]   # 查看当前任务详情
+```
+
+### 每日工作要求
+1. **环境同步**: 读取openspec状态，确认活跃变更
+2. **提案管理**: 为新任务创建变更提案或继续现有变更
+3. **实施开发**: 按tasks.md清单顺序完成OpenSpec任务
+4. **质量把关**: OpenSpec验证 + 编译测试 + 功能测试
+5. **状态同步**: 实时更新变更状态，确保进度透明
+
+### 里程碑达成 (OpenSpec驱动)
+- **Phase 1** (2周): 核心完善 - 达到完整单人游戏体验
+  - 目标: 完成核心系统OpenSpec规范归档
+- **Phase 2** (2周): 体验优化 - 双人模式和完整计分系统
+  - 目标: 用户界面和数据持久化规范完成
+- **Phase 3** (1周): 完美打磨 - 细节优化和最终测试
+  - 目标: 性能优化和隐藏特性规范完善
+
+## 🎯 当前优先级任务 (OpenSpec视角)
+
+基于进度计划表和OpenSpec状态分析，建议按以下顺序创建变更：
+
+### 🔥 高优先级变更提案 (立即创建)
+1. **`add-nes-audio-system`** - NES APU音频模拟
+   - 影响: audio/ 能力新增
+   - 复杂度: 高 (需要硬件模拟)
+
+2. **`implement-level-data-system`** - 35关地图数据系统
+   - 影响: level/ 能力扩展
+   - 复杂度: 中 (数据提取和加载)
+
+3. **`add-ui-display-system`** - 用户界面显示系统
+   - 影响: ui/ 能力新增
+   - 复杂度: 中 (HUD和菜单)
+
+4. **`complete-powerup-system`** - 完善道具系统
+   - 影响: gameplay/ 能力完善
+   - 复杂度: 低 (基于现有基类)
+
+### ⚠️ 中优先级变更提案 (Phase 2规划)
+1. **`add-scoring-system`** - 计分系统实现
+2. **`add-save-system`** - 存档系统实现
+3. **`implement-ai-pathfinding`** - AI路径寻找算法
+
+### 📋 OpenSpec变更命名规范
+```
+# 动词引导，kebab-case，描述性强
+✅ add-nes-audio-system      # 新增能力
+✅ implement-level-data      # 实现功能
+✅ optimize-ai-behavior      # 优化现有功能
+✅ fix-collision-detection   # 修复问题
+❌ audio_system              # 缺少动词
+❌ Add_NES_Audio             # 大小写错误
+```
+
+## 🚨 风险控制
+
+### OpenSpec流程风险
+- **规范漂移**: 实现偏离spec.md要求 - 解决方案: 实施前严格评审
+- **变更冲突**: 多变更同时修改相同能力 - 解决方案: 定期检查 `openspec list`
+- **提案积压**: 变更等待过久 - 解决方案: 及时评审和归档
+
+### 技术风险
+- **SDL2依赖**: 需要确保跨平台兼容性
+- **NES模拟精度**: 音频/视频模拟需要精确校准
+- **性能瓶颈**: AI和渲染同时运行时的CPU占用
+- **OpenSpec工具**: 确保工具链正常工作
+
+### 项目风险
+- **需求变更**: 严格遵循需求文档，避免功能膨胀
+- **进度延误**: 按阶段交付，确保里程碑达成
+- **质量下降**: 坚持代码质量标准，防患于未然
+- **规范一致性**: 确保所有变更符合OpenSpec格式要求
+
+## 📚 文档维护
+
+### OpenSpec文档管理
+```bash
+# 文档状态检查
+openspec list              # 查看活跃变更
+openspec show [item]       # 查看具体内容
+openspec validate --strict # 验证规范完整性
+```
+
+### 更新频率
+- **openspec/project.md**: 架构决策变更时更新
+- **进度计划表**: 每次OpenSpec归档后立即更新
+- **技术文档**: 重大架构变更时更新
+- **代码注释**: 新功能实现时补充完整注释
+- **变更提案**: 新功能开始时创建
+
+### 中英文文档策略
+- **核心规范**: OpenSpec使用英文格式，确保工具兼容性
+- **项目文档**: 使用中文，提高可读性和本地化
+- **代码注释**: 英文注释，符合C++社区标准
+- **提案评审**: 支持中英文混合，确保准确传达
+
+### 记忆系统使用
+- 使用PromptX记忆系统记录关键技术决策
+- 建立项目专用记忆域，方便后续查询
+- OpenSpec变更决策形成记忆，避免重复踩坑
+- 重要实现细节与规范关联，便于追溯
+
+---
+
+## 🔧 OpenSpec快速开始
+
+### 创建新变更的完整流程
+```bash
+# 1. 检查当前状态
+openspec list --specs
+
+# 2. 选择变更ID
+CHANGE_ID="add-nes-audio-system"
+
+# 3. 创建目录结构
+mkdir -p openspec/changes/$CHANGE_ID/{specs/audio}
+
+# 4. 编写提案
+cat > openspec/changes/$CHANGE_ID/proposal.md << 'EOF'
+# Change: add-nes-audio-system
+
+## Why
+坦克大战需要精确的NES音效复刻，包括射击、爆炸等经典音效。
+
+## What Changes
+- 新增NES APU音频模拟系统
+- 实现音效播放和背景音乐
+
+## Impact
+- Affected specs: audio/
+- Affected code: src/audio/
+EOF
+
+# 5. 创建任务清单
+cat > openspec/changes/$CHANGE_ID/tasks.md << 'EOF'
+## 1. Implementation
+- [ ] 1.1 实现NES APU脉冲波通道
+- [ ] 1.2 添加音效播放系统
+- [ ] 1.3 集成SDL2_mixer
+- [ ] 1.4 编写单元测试
+EOF
+
+# 6. 编写规范增量
+cat > openspec/changes/$CHANGE_ID/specs/audio/spec.md << 'EOF'
+## ADDED Requirements
+### Requirement: NES Audio Processing Unit
+系统必须模拟NES APU硬件以提供精确的8位音效。
+
+#### Scenario: Sound Effect Playback
+- **WHEN** 坦克发射子弹
+- **THEN** 播放精确的NES射击音效
+EOF
+
+# 7. 验证提案
+openspec validate $CHANGE_ID --strict
+```
+
+### 常见OpenSpec命令
+```bash
+openspec list                    # 查看活跃变更
+openspec show [change-id]        # 查看变更详情
+openspec validate [change-id]    # 验证规范格式
+openspec archive [change-id]     # 部署完成后归档
+```
+
+---
+
+## 🎯 执行准则
+
+### 🚨 强制要求（严格执行）
+1. **角色激活强制**: 每次开发任务必须先执行 `action("tank-expert")`
+2. **记忆系统强制**: 每次任务必须遵循认知循环（DMN扫描 → 多轮recall → remember）
+3. **OpenSpec强制**: 所有功能变更必须通过规范验证流程
+4. **质量标准强制**: 编译通过 + 功能验证 + 文档更新 + 记忆记录
+
+### ⚠️ 违反后果
+- ❌ **未激活角色**: 无法使用项目专用记忆，无法获得专家指导
+- ❌ **未使用记忆**: 无法积累项目经验，重复解决已知问题
+- ❌ **绕过OpenSpec**: 功能实现不规范，质量无法保证
+- ❌ **未记录记忆**: 项目经验流失，后续任务效率降低
+
+### ✅ 成功标准
+- ✅ 严格遵循PromptX + OpenSpec工作流
+- ✅ 每个开发步骤都有记忆记录
+- ✅ 项目质量持续提升，经验不断积累
+- ✅ 坦克大战完美复刻目标顺利达成
+
+**项目成功的关键在于严格执行PromptX系统，让AI助手成为真正懂项目的专家！**
